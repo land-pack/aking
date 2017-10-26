@@ -5,7 +5,7 @@ import copy
 
 
 
-MAX_ROOM_SIZE = '(3'
+
 
 ROOM_PREFIX = 'rs:room'
 ROOM_INDEX = 'rs:room:index'            # auto increment if have new room create!
@@ -14,12 +14,15 @@ ROOM_MEMBER_SET = 'rs:room:member:set'  # room id set
 UID_TO_ROOM = 'rs:uid:room'             # user to room map
 UID_TO_INFO = 'rs:uid:to:info:{}'       # for ttl
 
-ROOM_INSIDE_PUB = 'rs:pub:room{}'       # publish data to the target room
+ROOM_INSIDE_PUB = 'rs:pub:room:{}'       # publish data to the target room
 ROOM_ALL_PUB = 'rs:pub:all'             # publish data to all room
 
+# All your configuration should put as below sample
+# you can easy modify on redis client side
 CONF_MAIN = 'rs:conf:main'
 CF_TTL_KEY = 'ttl:sec'                  # user ttl sec
 CF_TTL_DEFAULT = 15                     # user ttl default value if no given ,use this
+CF_ROOM_SIZE = '(3'
 
 
 client = redis.Redis(host="localhost", port=6379, db=0)
@@ -39,13 +42,13 @@ class RS(object):
 
     def usage(self):
         """
-        Usage:
-            --------------@!@
-                     || // 
+
+               -------------------
+                /\   || // 
                //\\  ||//
               //--\\ ||\\
              //    \\|| \\ 
-            ==================
+        =====================
         """
         print '=' * 120
         print 'Room index:{}'.format(client.get(ROOM_INDEX))
@@ -62,7 +65,7 @@ class RS(object):
             self.update_ttl(uid)
             return rs_id
     
-        lst = client.zrevrangebyscore(ROOM_PREFIX, MAX_ROOM_SIZE, '(0')
+        lst = client.zrevrangebyscore(ROOM_PREFIX, CF_ROOM_SIZE, '(0')
         if lst:
             rs_id = lst[0]
             print '[ B ] Find a available room. roomid={} | uid={}'.format(rs_id, uid)
