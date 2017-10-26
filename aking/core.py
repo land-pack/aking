@@ -25,7 +25,18 @@ CF_TTL_DEFAULT = 15                     # user ttl default value if no given ,us
 client = redis.Redis(host="localhost", port=6379, db=0)
 
 class RS(object):
-    
+
+    def destroy(self):
+        confirm = raw_input("Destroy all data with RS. Are you sure? [Y/N]") or 'N'
+        if confirm.upper() in 'YES':
+            all_keys = client.keys('rs:*')
+            for k in all_keys:
+                client.delete(k)
+            print '[ A ] All key with "rs:*" has delete .Total delete {}'.format(len(all_keys))
+        else:
+            print '[ B ] Keep store it ..'
+
+
     def usage(self):
         """
         Usage:
