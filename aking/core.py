@@ -5,12 +5,16 @@ import copy
 
 MAX_GOLD = 1000
 PREFIX = 'prefix_key'
+ROOM_MAX_MEMBERS = '(3'
+
 ROOM_INDEX = 'rs:room:index'
 ROOM_PREFIX = 'rs:room'
 ROOM_MEMBERS = 'rs:room:members:{}'
-ROOM_MAX_MEMBERS = '(3'
+ROOM_MEMBER_SET = 'rs:room:member:set'
+
 UID_TO_ROOM = 'rs:uid:room'
 UID_TO_INFO = 'rs:uid:to:info:{}' # for ttl
+
 ROOM_INSIDE_PUB = 'rs:pub:room{}'
 ROOM_ALL_PUB = 'rs:pub:all'
 
@@ -28,7 +32,13 @@ class RS(object):
              //    \\|| \\ 
             ==================
         """
-        pass
+        print '=' * 120
+        print 'Room index:{}'.format(client.get(ROOM_INDEX))
+
+        all_rs_id = client.smembers(ROOM_MEMBER_SET)
+        for rs_id in all_rs_id:
+            print 'Room member:{}:{}'.format(rs_id, client.smembers(ROOM_MEMBERS.format(rs_id)))
+        print '=' * 120
     
     def user_join(self, uid):
         rs_id = client.hget(UID_TO_ROOM, uid)
@@ -44,11 +54,13 @@ class RS(object):
         else:
             client.incr(ROOM_INDEX)
             rs_id = 'r{}'.format(client.get(ROOM_INDEX))
+            client.sadd(ROOM_MEMBER_SET, rs_id)
             print '[ C ] Create a new room. roomid={} | uid={}'.format(rs_id, uid)
          
 
         self._init(rs_id, uid)
         self.update_ttl(uid)
+        self.pub_to_room(rs_id, {'type':'join','uid':uid})
         return rs_id
 
     def _init(self, rs_id, uid):
@@ -107,7 +119,13 @@ class RS(object):
         """
         Clear empty room!
         """
+        empty_room = client.zrangebyscore(ROOM_PREFIX, 0, '(1')
+        for rs_id in empty_room:
+            client.srem(ROOM_MEMBER_SET, rs_id)
+            print '[ A ] Flash the room. roomid={}'.format(rs_id)
+        print '[ B ] Flash the room total. total empty room={}'.format(len(empty_room))
         client.zremrangebyscore(ROOM_PREFIX, 0, '(1')
+
 
     def pub_to_room(self, rs_id, data=''):
         client.publish(ROOM_INSIDE_PUB.format(rs_id), data)
