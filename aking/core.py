@@ -29,9 +29,9 @@ class RS(object):
     def destroy(self):
         confirm = raw_input("Destroy all data with RS. Are you sure? [Y/N]") or 'N'
         if confirm.upper() in 'YES':
-            all_keys = client.keys('rs:*')
+            all_keys = self.c.keys('rs:*')
             for k in all_keys:
-                client.delete(k)
+                self.c.delete(k)
             print '[ A ] All key with "rs:*" prefix has delete .Total delete {} keys'.format(len(all_keys))
         else:
             print '[ B ] Keep store it ..'
@@ -48,15 +48,15 @@ class RS(object):
         =====================
         """
         print '=' * 120
-        print 'Room index:{}'.format(client.get(ROOM_INDEX))
-        all_rs_id = client.smembers(ROOM_MEMBER_SET)
+        print 'Room index:{}'.format(self.c.get(ROOM_INDEX))
+        all_rs_id = self.c.smembers(ROOM_MEMBER_SET)
         for rs_id in all_rs_id:
-            print 'Room member:{}:{}'.format(rs_id, client.smembers(ROOM_MEMBERS.format(rs_id)))
+            print 'Room member:{}:{}'.format(rs_id, self.c.smembers(ROOM_MEMBERS.format(rs_id)))
         print '=' * 120
     
 
     def user_join(self, uid):
-        rs_id = client.hget(UID_TO_ROOM, uid)
+        rs_id = self.c.hget(UID_TO_ROOM, uid)
         if rs_id:
             print '[ A ] User has join the room. roomid={} | uid={}'.format(rs_id, uid)
             self.update_ttl(uid)
@@ -64,14 +64,14 @@ class RS(object):
 
         # TODO add lock here
         room_size = self.c.hget(CONF_MAIN, 'room_size')
-        lst = client.zrevrangebyscore(ROOM_PREFIX, room_size, '(0')
+        lst = self.c.zrevrangebyscore(ROOM_PREFIX, room_size, '(0')
         if lst:
             rs_id = lst[0]
             print '[ B ] Find a available room. roomid={} | uid={}'.format(rs_id, uid)
         else:
-            client.incr(ROOM_INDEX)
-            rs_id = 'r{}'.format(client.get(ROOM_INDEX))
-            client.sadd(ROOM_MEMBER_SET, rs_id)
+            self.c.incr(ROOM_INDEX)
+            rs_id = 'r{}'.format(self.c.get(ROOM_INDEX))
+            self.c.sadd(ROOM_MEMBER_SET, rs_id)
             print '[ C ] Create a new room. roomid={} | uid={}'.format(rs_id, uid)
          
 
@@ -82,37 +82,37 @@ class RS(object):
 
 
     def _init(self, rs_id, uid):
-        client.set(UID_TO_INFO.format(uid), 1)
-        client.zincrby(ROOM_PREFIX,rs_id, 1)
-        client.sadd(ROOM_MEMBERS.format(rs_id), str(uid))
-        client.hset(UID_TO_ROOM, uid, rs_id) #
+        self.c.set(UID_TO_INFO.format(uid), 1)
+        self.c.zincrby(ROOM_PREFIX,rs_id, 1)
+        self.c.sadd(ROOM_MEMBERS.format(rs_id), str(uid))
+        self.c.hset(UID_TO_ROOM, uid, rs_id) #
 
 
     def _clear(self, rs_id, uid):
-        client.hdel(UID_TO_ROOM, uid)
-        client.srem(ROOM_MEMBERS.format(rs_id), uid)
-        client.zincrby(ROOM_PREFIX, rs_id, -1)
-        client.delete(UID_TO_INFO.format(uid))
+        self.c.hdel(UID_TO_ROOM, uid)
+        self.c.srem(ROOM_MEMBERS.format(rs_id), uid)
+        self.c.zincrby(ROOM_PREFIX, rs_id, -1)
+        self.c.delete(UID_TO_INFO.format(uid))
 
     def rindex(self):
         """
             Room Index Counter
         """
-        return client.get(ROOM_INDEX)
+        return self.c.get(ROOM_INDEX)
 
 
     def ttl(self, uid):
-        return client.get(UID_TO_INFO.format(uid))
+        return self.c.ttl(UID_TO_INFO.format(uid))
 
     def is_alive(self, uid):
-        if self.ttl(uid):
+        if self.ttl(uid) > 0:
             return True
         else:
             return False
 
 
     def user_leave(self, uid):
-        rs_id = client.hget(UID_TO_ROOM, uid)
+        rs_id = self.c.hget(UID_TO_ROOM, uid)
         if rs_id:
             self._clear(rs_id, uid)
             print '[ A ] Remove a user. roomid={} | uid={}'.format(rs_id, uid)
@@ -128,7 +128,7 @@ class RS(object):
         """
         if not sec:
             sec = int(self.c.hget(CONF_MAIN, 'user_ttl'))
-        client.expire(UID_TO_INFO.format(uid),sec)
+        self.c.expire(UID_TO_INFO.format(uid),sec)
 
 
     def clear(self):
@@ -137,7 +137,7 @@ class RS(object):
         remove from data base and then publish a message to the
         room which the user are used to live!
         """
-        all_uid = client.hgetall(UID_TO_ROOM)
+        all_uid = self.c.hgetall(UID_TO_ROOM)
         for uid, rs_id in all_uid.items():
             if self.is_alive(uid):
                 print '[ A ] User has keep alive. roomid={} | uid={}'.format(rs_id, uid)
@@ -152,29 +152,29 @@ class RS(object):
         """
         Clear empty room!
         """
-        empty_room = client.zrangebyscore(ROOM_PREFIX, 0, '(1')
+        empty_room = self.c.zrangebyscore(ROOM_PREFIX, 0, '(1')
         for rs_id in empty_room:
-            client.srem(ROOM_MEMBER_SET, rs_id)
+            self.c.srem(ROOM_MEMBER_SET, rs_id)
             print '[ A ] Flash the room. roomid={}'.format(rs_id)
         print '[ B ] Flash the room total. total empty room={}'.format(len(empty_room))
-        client.zremrangebyscore(ROOM_PREFIX, 0, '(1')
+        self.c.zremrangebyscore(ROOM_PREFIX, 0, '(1')
 
 
     def pub_to_room(self, rs_id, data=''):
-        client.publish(ROOM_INSIDE_PUB.format(rs_id), data)
+        self.c.publish(ROOM_INSIDE_PUB.format(rs_id), data)
 
 
     def pub_to_all(self, data=''):
-        client.publish(ROOM_ALL_PUB, data)
+        self.c.publish(ROOM_ALL_PUB, data)
 
 
     def sub_from_room(self, rs_id):
-        data = client.pubsub_channels(ROOM_INSIDE_PUB.format(rs_id))
+        data = self.c.pubsub_channels(ROOM_INSIDE_PUB.format(rs_id))
         return data
 
 
     def sub_from_all(self):
-        data = client.pubsub_channels(ROOM_ALL_PUB)
+        data = self.c.pubsub_channels(ROOM_ALL_PUB)
         return data
     
     def conf_reset(self, init=False):
@@ -191,7 +191,7 @@ class RS(object):
             You can easily configure your RoomServer.
             Just call this method.
         """
-        conf_keys = client.hgetall(CONF_MAIN)
+        conf_keys = self.c.hgetall(CONF_MAIN)
         index_to_keys = {}
         i = 0
         for key, value in conf_keys.items():
@@ -203,7 +203,7 @@ class RS(object):
         k = index_to_keys.get(str(i))
         if k:
             v = raw_input(" Set {}= ".format(k))
-            client.hset(CONF_MAIN, k, v)
+            self.c.hset(CONF_MAIN, k, v)
             print '[ B ] {} has update to {}'.format(key, v)
         else:
             print '[ C ] No match option!'
