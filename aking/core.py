@@ -2,11 +2,6 @@ import redis
 import ujson
 import copy
 
-
-
-
-
-
 ROOM_PREFIX = 'rs:room'
 ROOM_INDEX = 'rs:room:index'            # auto increment if have new room create!
 ROOM_MEMBERS = 'rs:room:members:{}'     # a redis set type, the key with rs_id as subfix!
@@ -20,10 +15,7 @@ ROOM_ALL_PUB = 'rs:pub:all'             # publish data to all room
 # All your configuration should put as below sample
 # you can easy modify on redis client side
 CONF_MAIN = 'rs:conf:main:'
-CF_TTL_KEY = 'ttl:sec'                  # user ttl sec
-CF_TTL_DEFAULT = 15                     # user ttl default value if no given ,use this
-CF_ROOM_SIZE = '(3'
-
+CONF_FLAG = 'rs:conf:flag'
 
 client = redis.Redis(host="localhost", port=6379, db=0)
 
@@ -31,9 +23,8 @@ class RS(object):
 
     def __init__(self, client = client):
         self.c = client
-        self.c.hset(CONF_MAIN, 'cf1', 1)
-        self.c.hset(CONF_MAIN, 'cf2', 1)
-        self.c.hset(CONF_MAIN, 'cf3', 1)
+        self.conf_reset()
+
 
     def destroy(self):
         confirm = raw_input("Destroy all data with RS. Are you sure? [Y/N]") or 'N'
@@ -72,7 +63,8 @@ class RS(object):
             return rs_id
 
         # TODO add lock here
-        lst = client.zrevrangebyscore(ROOM_PREFIX, CF_ROOM_SIZE, '(0')
+        room_size = self.c.hget(CONF_MAIN, 'room_size')
+        lst = client.zrevrangebyscore(ROOM_PREFIX, room_size, '(0')
         if lst:
             rs_id = lst[0]
             print '[ B ] Find a available room. roomid={} | uid={}'.format(rs_id, uid)
@@ -135,8 +127,7 @@ class RS(object):
         be called and then update the expire!
         """
         if not sec:
-            ttl_value = client.hget(CONF_MAIN, CF_TTL_KEY) or CF_TTL_DEFAULT
-            sec = int(ttl_value)
+            sec = int(self.c.hget(CONF_MAIN, 'user_ttl'))
         client.expire(UID_TO_INFO.format(uid),sec)
 
 
@@ -151,7 +142,7 @@ class RS(object):
             if self.is_alive(uid):
                 print '[ A ] User has keep alive. roomid={} | uid={}'.format(rs_id, uid)
             else:
-                print '[ B ] User has keep die . roomid={} | uid={}'.format(rs_id, uid)
+                print '[ B ] User has die. roomid={} | uid={}'.format(rs_id, uid)
                 self._clear(rs_id, uid)
                 self.pub_to_room(rs_id, {'type':'leave','uid':uid})
 
@@ -185,6 +176,15 @@ class RS(object):
     def sub_from_all(self):
         data = client.pubsub_channels(ROOM_ALL_PUB)
         return data
+    
+    def conf_reset(self, init=False):
+        reset_flag = self.c.get(CONF_FLAG)
+        if init or reset_flag: 
+            delete_item = len([self.c.delete(k) for k in self.c.keys(CONF_MAIN)])
+
+        self.c.hsetnx(CONF_MAIN, 'user_xx', 1)
+        self.c.hsetnx(CONF_MAIN, 'user_ttl', 15)
+        self.c.hsetnx(CONF_MAIN, 'room_size', '(3')
 
     def conf(self):
         """
