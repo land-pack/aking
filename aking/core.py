@@ -19,7 +19,7 @@ ROOM_ALL_PUB = 'rs:pub:all'             # publish data to all room
 
 # All your configuration should put as below sample
 # you can easy modify on redis client side
-CONF_MAIN = 'rs:conf:main'
+CONF_MAIN = 'rs:conf:main:'
 CF_TTL_KEY = 'ttl:sec'                  # user ttl sec
 CF_TTL_DEFAULT = 15                     # user ttl default value if no given ,use this
 CF_ROOM_SIZE = '(3'
@@ -29,13 +29,19 @@ client = redis.Redis(host="localhost", port=6379, db=0)
 
 class RS(object):
 
+    def __init__(self, client = client):
+        self.c = client
+        self.c.hset(CONF_MAIN, 'cf1', 1)
+        self.c.hset(CONF_MAIN, 'cf2', 1)
+        self.c.hset(CONF_MAIN, 'cf3', 1)
+
     def destroy(self):
         confirm = raw_input("Destroy all data with RS. Are you sure? [Y/N]") or 'N'
         if confirm.upper() in 'YES':
             all_keys = client.keys('rs:*')
             for k in all_keys:
                 client.delete(k)
-            print '[ A ] All key with "rs:*" has delete .Total delete {}'.format(len(all_keys))
+            print '[ A ] All key with "rs:*" prefix has delete .Total delete {} keys'.format(len(all_keys))
         else:
             print '[ B ] Keep store it ..'
 
@@ -64,7 +70,8 @@ class RS(object):
             print '[ A ] User has join the room. roomid={} | uid={}'.format(rs_id, uid)
             self.update_ttl(uid)
             return rs_id
-    
+
+        # TODO add lock here
         lst = client.zrevrangebyscore(ROOM_PREFIX, CF_ROOM_SIZE, '(0')
         if lst:
             rs_id = lst[0]
@@ -95,9 +102,18 @@ class RS(object):
         client.zincrby(ROOM_PREFIX, rs_id, -1)
         client.delete(UID_TO_INFO.format(uid))
 
+    def rindex(self):
+        """
+            Room Index Counter
+        """
+        return client.get(ROOM_INDEX)
+
+
+    def ttl(self, uid):
+        return client.get(UID_TO_INFO.format(uid))
 
     def is_alive(self, uid):
-        if client.get(UID_TO_INFO.format(uid)):
+        if self.ttl(uid):
             return True
         else:
             return False
@@ -141,7 +157,7 @@ class RS(object):
 
     
 
-    def flash(self):
+    def flush(self):
         """
         Clear empty room!
         """
@@ -170,6 +186,28 @@ class RS(object):
         data = client.pubsub_channels(ROOM_ALL_PUB)
         return data
 
+    def conf(self):
+        """
+            You can easily configure your RoomServer.
+            Just call this method.
+        """
+        conf_keys = client.hgetall(CONF_MAIN)
+        index_to_keys = {}
+        i = 0
+        for key, value in conf_keys.items():
+            i += 1
+            index_to_keys[str(i)]= key
+            print '[ A ] {}) {} = {}.'.format(i, key, value)
+
+        i = raw_input("Which item you want to modify? please input index id: ")
+        k = index_to_keys.get(str(i))
+        if k:
+            v = raw_input(" Set {}= ".format(k))
+            client.hset(CONF_MAIN, k, v)
+            print '[ B ] {} has update to {}'.format(key, v)
+        else:
+            print '[ C ] No match option!'
+            
 
     
 if __name__ == '__main__':
