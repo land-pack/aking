@@ -17,11 +17,11 @@ ROOM_ALL_PUB = 'rs:pub:all'             # publish data to all room
 CONF_MAIN = 'rs:conf:main:'
 CONF_FLAG = 'rs:conf:flag'
 
-client = redis.Redis(host="localhost", port=6379, db=0)
+# client = redis.Redis(host="localhost", port=6379, db=0)
 
 class RS(object):
 
-    def __init__(self, client = client):
+    def __init__(self, client):
         self.c = client
         self.conf_reset()
 
