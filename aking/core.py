@@ -213,8 +213,6 @@ class RS(object):
         members = self.c.smembers(ROOM_MEMBERS.format(rs_id))
         return members
 
-
-
             
 
     
