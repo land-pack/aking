@@ -207,6 +207,14 @@ class RS(object):
             print '[ B ] {} has update to {}'.format(key, v)
         else:
             print '[ C ] No match option!'
+
+    def my_member(self, uid):
+        rs_id = self.c.hget(UID_TO_ROOM, uid)
+        members = self.c.smembers(ROOM_MEMBERS.format(rs_id))
+        return members
+
+
+
             
 
     
