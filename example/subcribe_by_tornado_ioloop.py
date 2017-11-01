@@ -6,6 +6,9 @@ from dispatch import Dispatch
 from msg_manager import ExampleMsgManager
 
 
+
+
+
 class EchoWebSocket(websocket.WebSocketHandler):
 	def check_origin(self, origin):
 		return True
@@ -16,7 +19,6 @@ class EchoWebSocket(websocket.WebSocketHandler):
 		self.write_message(u"connected")
 
 	def on_message(self, message):
-		
 		self.write_message(u"You said: " + message)
 		Dispatch(MsgManager=ExampleMsgManager).route(self, message)
 

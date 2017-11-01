@@ -26,8 +26,12 @@ class Dispatch(object):
 		else:
 			func_name = data.get('msg_type')
 			data = data.get("data")
-			getattr(self.msg_manager, func_name, self.default_func)(handler, data)
-
+			ret = getattr(self.msg_manager, func_name, self.default_func)(handler, data)
+		if not ret : return
+		try:	
+			handler.write_message(ujson.dumps(ret))
+		except:
+			print 'return message error format '
 	def default_func(self, handler, data):
 		print 'run default function'
 		handler.write_message("default function")
