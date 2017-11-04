@@ -10,7 +10,7 @@ UID_TO_ROOM = 'rs:uid:room'             # user to room map
 UID_TO_INFO = 'rs:uid:to:info:{}'       # for ttl
 
 ROOM_INSIDE_PUB = 'rs:pub:room:{}'       # publish data to the target room
-ROOM_ALL_PUB = 'rs:pub:all'             # publish data to all room
+ROOM_ALL_PUB = 'rs:MessageToPlayerOnTheSameRoom'  # publish data to all room
 
 # All your configuration should put as below sample
 # you can easy modify on redis client side

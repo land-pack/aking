@@ -10,7 +10,11 @@ rs = RS(client=client)
 logger = logging.getLogger('simple')
 
 
+
 class BaseMsgManager(object):
+
+
+
 	def user_join(self, handler, data):
 		logger.debug('data type=%s | data=%s', type(data), data)
 		uid = data.get("uid")
@@ -18,9 +22,17 @@ class BaseMsgManager(object):
 			"msg_type": "ack_user_join",
 			"msg_id": "124",
 			"data":{
+
 				}
 			}
 		rs.user_join(uid)
+
+		packet = {
+			"receivers": rs.my_member(uid),
+			"content": ret
+		}
+
+		rs.pub_to_all(ujson.dumps(packet))
 		return ret 
 	def user_leave(self, handler, data):
 		logger.debug('data type=%s | data=%s', type(data), data)

@@ -1,3 +1,4 @@
+import traceback
 import logging
 import ujson
 from tornado import web
@@ -14,6 +15,7 @@ dispatch_obj = Dispatch(MsgManager=BaseMsgManager)
 
 ws_handler = []
 player_lst = []
+uid_to_handler = {}
 # player_manager = PlayerManager()
 
 # Player connect success and then generate a player object!
@@ -28,7 +30,7 @@ def my_sub(channel, body):
         handler.write_message(body)
 
 @pb.sub("VGuessEventMessage")
-def my_sub(channel, body):
+def vguess_event_message(channel, body):
     print 'channel -->', channel, 'body', body
     global ws_handler
     for handler in ws_handler:
@@ -46,6 +48,20 @@ def player_join_room(channel, body):
     player_list.add(player)
     logger.warning("player manager -->%s", PlayerManager.usage())
 
+@pb.sub("rs:MessageToPlayerOnTheSameRoom")
+def message_to_player_on_the_same_room(channel, body):
+    logger.debug('channel -->%s | body=%s', channel, body)
+    global ws_handler
+    data = ujson.loads(body)
+    uids =  data.get("receivers")
+    content = data.get("content")
+    for uid in uids:
+        try:
+            handler = uid_to_handler.get(str(uid))
+            handler.write_message(body)
+            logger.info("Send Message to uid=%s | data=%s", uid, content)
+        except:
+            logger.error(traceback.format_exc())
 
 
 class EchoWebSocket(websocket.WebSocketHandler):
@@ -54,29 +70,30 @@ class EchoWebSocket(websocket.WebSocketHandler):
         self.arg = d
         logger.info('websocket arguments:%s', d)
 
+
     def check_origin(self, origin):
         return True
 
 
     def open(self):
         logger.info("WebSocket opened")
-        # global ws_handler
-        # ws_handler.append(self)
         uid = self.arg.get("uid", 0)
         logger.debug("open websocket with uid=%s", uid)
         player_id_to_object[uid] =  Player(self, uid)
+        uid_to_handler[uid] =  self
 
-        # self.write_message(u"connected")
 
     def on_message(self, message):
         logger.info("WebSocket message")
         dispatch_obj.route(self, message)
 
+
     def on_close(self):
-        # ws_handler.remove(self)
         uid = self.arg.get("uid", 0)
         del player_id_to_object[uid]
+        del uid_to_handler[uid]
         logger.info("WebSocket closed")
+
 
 
 
