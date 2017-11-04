@@ -5,7 +5,7 @@ from tornado import ioloop
 from tornado import websocket
 from pubsub import PubSub
 from player import Player, PlayerList 
-
+import utils.color
 
 logger = logging.getLogger('simple')
 

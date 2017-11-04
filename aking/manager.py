@@ -5,6 +5,8 @@ from tornado import ioloop
 from tornado import websocket
 from core.kws import EchoWebSocket
 from core.kws import pb
+import utils.color
+
 logging.config.fileConfig("./etc/node_log.conf")
 
 if __name__ == '__main__':
