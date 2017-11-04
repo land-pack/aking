@@ -14,7 +14,6 @@ logger = logging.getLogger('simple')
 class BaseMsgManager(object):
 
 
-
 	def user_join(self, handler, data):
 		logger.debug('data type=%s | data=%s', type(data), data)
 		uid = data.get("uid")
@@ -26,7 +25,22 @@ class BaseMsgManager(object):
 				}
 			}
 		rs.user_join(uid)
+		packet = {
+			"receivers": rs.my_member(uid),
+			"content": ret
+		}
+		rs.pub_to_all(ujson.dumps(packet))
+		return ret 
 
+
+	def user_leave(self, handler, data):
+		logger.debug('data type=%s | data=%s', type(data), data)
+		ret = {
+			"msg_type": "ack_user_leave",
+			"msg_id": "125",
+			"data":{
+				}
+			}
 		packet = {
 			"receivers": rs.my_member(uid),
 			"content": ret
@@ -34,15 +48,7 @@ class BaseMsgManager(object):
 
 		rs.pub_to_all(ujson.dumps(packet))
 		return ret 
-	def user_leave(self, handler, data):
-		logger.debug('data type=%s | data=%s', type(data), data)
-		ret = {
-			"msg_type": "ack_user_leave",
-			"msg_id": "124",
-			"data":{
-				}
-			}
-		return ret 
+
 
 class Dispatch(object):
 	def __init__(self, MsgManager):
@@ -70,6 +76,8 @@ class Dispatch(object):
 			handler.write_message(ujson.dumps(ret))
 		except:
 			logger.error('return message error format ')
+
+
 	def default_func(self, handler, data):
 		print 'run default function'
 		handler.write_message("default function")

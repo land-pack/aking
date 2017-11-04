@@ -26,9 +26,15 @@ class PubSub(object):
 				selected_db=r_db,
 				io_loop=io_loop
 			)
+		self.redis_handler = redis.Redis(
+				host=r_host,
+				port=r_port,
+				db=r_db,)
 		self.subscribe_handler.connect()
 		self.listen()
 
+	def pub(self, channel, data):
+		self.redis_handler.publish(channel, data) 
 
 	def subscribe_callback(self, msg):
 		if msg.kind != 'message':
