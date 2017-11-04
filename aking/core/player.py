@@ -59,34 +59,55 @@ class PlayerList(set):
 		super(PlayerList, self).remove(item)
 
 
+class PlayerManager(dict):
+	def __getitem__(self, rs_id):
+		if rs_id in self:
+			return self[rs_id]
+		else:
+			obj = PlayerList(rs_id)
+			self[rs_id] = obj
+			return obj
+
+
+
+
 
 
 if __name__ == '__main__':
-	pl = PlayerList()
-	p1 = Player(object(), 123)
-	p2 = Player(object(), 133)
-	pl.add(p1)
-	pl.add(p2)
+	# pl = PlayerList()
+	# p1 = Player(object(), 123)
+	# p2 = Player(object(), 133)
+	# pl.add(p1)
+	# pl.add(p2)
 
 
-	print pl
-	print '=' * 20
+	# print pl
+	# print '=' * 20
 
-	for p in pl:
-		print 'uid->', p.uid, 'timeline->', p.timeline
+	# for p in pl:
+	# 	print 'uid->', p.uid, 'timeline->', p.timeline
 
-	print 'my uid=',p1.uid, 'my frends=', p1.member
+	# print 'my uid=',p1.uid, 'my frends=', p1.member
 
-	# p1.group_chat('hello')
+	# # p1.group_chat('hello')
+
+	# p3 = Player(object(), 143)
+	# pl.add(p3)
+
+	# # p1.group_chat('say')
+	# print pl
+	# print '=' * 20
+
+	# pl.remove('123')
+	# print 'after remove'
+	# print pl
 
 	p3 = Player(object(), 143)
+	# pl.add(p3)
+	pm = PlayerManager()
+	pl = pm[2022]
 	pl.add(p3)
-
-	# p1.group_chat('say')
 	print pl
-	print '=' * 20
-
-	pl.remove('123')
-	print 'after remove'
-	print pl
+	print pm
+	# pm.add(item)
 

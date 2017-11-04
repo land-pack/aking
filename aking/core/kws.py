@@ -4,7 +4,7 @@ from tornado import web
 from tornado import ioloop
 from tornado import websocket
 from pubsub import PubSub
-from player import Player, PlayerList 
+from player import Player, PlayerList, PlayerManager
 from dispatch import BaseMsgManager, Dispatch
 
 logger = logging.getLogger('simple')
@@ -14,7 +14,7 @@ dispatch_obj = Dispatch(MsgManager=BaseMsgManager)
 
 ws_handler = []
 player_lst = []
-player_room = PlayerList()
+player_manager = PlayerManager()
 
 # Player connect success and then generate a player object!
 player_id_to_object = {}
@@ -37,9 +37,15 @@ def my_sub(channel, body):
 
 @pb.sub("PlayerJoinRoom")
 def player_join_room(channel, body):
-    logger.debug("body type=%s | body=%s", type(body), body)
     data = ujson.loads(body)
-    logger.info("user id=%s | room id=%s", data.get("uid"), data.get("rs_id"))
+    uid =  str(data.get("uid"))
+    rs_id = data.get("rs_id")
+    logger.info("user id=%s | room id=%s", uid, rs_id)
+    player_list = player_manager[rs_id]
+    player = player_id_to_object[uid]
+    player_list.add(player)
+    logger.warning("player manager -->%s", player_manager)
+
 
 
 class EchoWebSocket(websocket.WebSocketHandler):
@@ -57,6 +63,7 @@ class EchoWebSocket(websocket.WebSocketHandler):
         # global ws_handler
         # ws_handler.append(self)
         uid = self.arg.get("uid", 0)
+        logger.debug("open websocket with uid=%s", uid)
         player_id_to_object[uid] =  Player(self, uid)
 
         # self.write_message(u"connected")
