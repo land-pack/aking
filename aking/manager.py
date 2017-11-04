@@ -1,8 +1,8 @@
 from tornado import web
 from tornado import ioloop
 from tornado import websocket
-from kws import EchoWebSocket
-from kws import pb
+from core.kws import EchoWebSocket
+from core.kws import pb
 
 
 if __name__ == '__main__':

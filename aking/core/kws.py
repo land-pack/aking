@@ -9,6 +9,7 @@ pb = PubSub()
 
 ws_handler = []
 player_lst = []
+player_room = PlayerList()
 
 
 @pb.sub("my_sub")
@@ -24,6 +25,12 @@ def my_sub(channel, body):
     global ws_handler
     for handler in ws_handler:
         handler.write_message(body)
+
+
+@pb.sub("PlayerJoinRoom")
+def player_join_room(channel, body):
+    pass 
+
 
 class EchoWebSocket(websocket.WebSocketHandler):
     def prepare(self):
