@@ -1,3 +1,5 @@
+import logging
+
 from tornado import web
 from tornado import ioloop
 from tornado import websocket
@@ -5,11 +7,16 @@ from pubsub import PubSub
 from player import Player, PlayerList 
 
 
+logger = logging.getLogger('simple')
+
 pb = PubSub()
 
 ws_handler = []
 player_lst = []
 player_room = PlayerList()
+
+# Player connect success and then generate a player object!
+player_id_to_object = {}
 
 
 @pb.sub("my_sub")
@@ -43,13 +50,11 @@ class EchoWebSocket(websocket.WebSocketHandler):
 
 
     def open(self):
+        print("WebSocket opened")
         global ws_handler
         ws_handler.append(self)
         uid = self.arg.get("uid", 0)
-        player = Player(self, uid)
-        player_lst.append(player)
-
-        print("WebSocket opened")
+        player_id_to_object[uid] =  Player(self, uid)
         self.write_message(u"connected")
 
     def on_message(self, message):
@@ -57,7 +62,8 @@ class EchoWebSocket(websocket.WebSocketHandler):
 
     def on_close(self):
         ws_handler.remove(self)
-        player_lst.remove(self.arg.uid)
+        uid = self.arg.get("uid", 0)
+        del player_id_to_object[uid]
         print("WebSocket closed")
 
 
