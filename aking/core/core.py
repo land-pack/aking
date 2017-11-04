@@ -78,7 +78,11 @@ class RS(object):
         self._init(rs_id, uid)
         self.update_ttl(uid)
         self.pub_to_room(rs_id, {'type':'join','uid':uid})
+        self.bind_to_player_by_pub({'uid':uid, 'rs_id': rs_id})
         return rs_id
+
+    def bind_to_player_by_pub(self, data):
+        self.c.publish("PlayerJoinRoom", ujson.dumps(data))
 
 
     def _init(self, rs_id, uid):

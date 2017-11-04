@@ -1,15 +1,16 @@
 import logging
-
+import ujson
 from tornado import web
 from tornado import ioloop
 from tornado import websocket
 from pubsub import PubSub
 from player import Player, PlayerList 
-import utils.color
+from dispatch import BaseMsgManager, Dispatch
 
 logger = logging.getLogger('simple')
 
 pb = PubSub()
+dispatch_obj = Dispatch(MsgManager=BaseMsgManager)
 
 ws_handler = []
 player_lst = []
@@ -36,7 +37,9 @@ def my_sub(channel, body):
 
 @pb.sub("PlayerJoinRoom")
 def player_join_room(channel, body):
-    pass 
+    logger.debug("body type=%s | body=%s", type(body), body)
+    data = ujson.loads(body)
+    logger.info("user id=%s | room id=%s", data.get("uid"), data.get("rs_id"))
 
 
 class EchoWebSocket(websocket.WebSocketHandler):
@@ -50,21 +53,23 @@ class EchoWebSocket(websocket.WebSocketHandler):
 
 
     def open(self):
-        print("WebSocket opened")
-        global ws_handler
-        ws_handler.append(self)
+        logger.info("WebSocket opened")
+        # global ws_handler
+        # ws_handler.append(self)
         uid = self.arg.get("uid", 0)
         player_id_to_object[uid] =  Player(self, uid)
-        self.write_message(u"connected")
+
+        # self.write_message(u"connected")
 
     def on_message(self, message):
-        self.write_message(u"You said: " + message)
+        logger.info("WebSocket message")
+        dispatch_obj.route(self, message)
 
     def on_close(self):
-        ws_handler.remove(self)
+        # ws_handler.remove(self)
         uid = self.arg.get("uid", 0)
         del player_id_to_object[uid]
-        print("WebSocket closed")
+        logger.info("WebSocket closed")
 
 
 
