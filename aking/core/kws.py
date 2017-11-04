@@ -14,7 +14,7 @@ dispatch_obj = Dispatch(MsgManager=BaseMsgManager)
 
 ws_handler = []
 player_lst = []
-player_manager = PlayerManager()
+# player_manager = PlayerManager()
 
 # Player connect success and then generate a player object!
 player_id_to_object = {}
@@ -41,10 +41,10 @@ def player_join_room(channel, body):
     uid =  str(data.get("uid"))
     rs_id = data.get("rs_id")
     logger.info("user id=%s | room id=%s", uid, rs_id)
-    player_list = player_manager[rs_id]
+    player_list = PlayerManager.get(rs_id)
     player = player_id_to_object[uid]
     player_list.add(player)
-    logger.warning("player manager -->%s", player_manager)
+    logger.warning("player manager -->%s", PlayerManager.usage())
 
 
 

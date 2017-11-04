@@ -59,16 +59,23 @@ class PlayerList(set):
 		super(PlayerList, self).remove(item)
 
 
-class PlayerManager(dict):
-	def __getitem__(self, rs_id):
-		if rs_id in self:
-			return self[rs_id]
+class PlayerManager(object):
+
+	rs_id_to_player_list = {}
+
+	@classmethod
+	def get(cls, rs_id):
+		if rs_id in cls.rs_id_to_player_list:
+			return cls.rs_id_to_player_list[rs_id]
 		else:
 			obj = PlayerList(rs_id)
-			self[rs_id] = obj
+			cls.rs_id_to_player_list[rs_id] = obj
 			return obj
 
 
+	@classmethod
+	def usage(cls):
+		return '{}'.format(cls.rs_id_to_player_list)
 
 
 
@@ -103,11 +110,21 @@ if __name__ == '__main__':
 	# print pl
 
 	p3 = Player(object(), 143)
+	p4 = Player(object(), 144)
+	p5 = Player(object(), 145)
+	p6 = Player(object(), 146)
+	p7 = Player(object(), 147)
 	# pl.add(p3)
-	pm = PlayerManager()
-	pl = pm[2022]
-	pl.add(p3)
-	print pl
+	pm = PlayerManager.get(2023)
+	# pl = pm[2022]
+	pm.add(p3)
+	pm.add(p4)
+	pm.add(p5)
+	pm = PlayerManager.get(2024)
+	pm.add(p6)
+	pm.add(p7)
+	# print pl
 	print pm
+	print PlayerManager.usage()
 	# pm.add(item)
 
