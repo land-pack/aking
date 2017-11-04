@@ -16,16 +16,14 @@ class PubSub(object):
 
 	@gen.engine
 	def listen(self):
-		# global self.subscribe_handler
 		yield gen.Task(self.subscribe_handler.subscribe, self.subscribe_channel_set)
 		self.subscribe_handler.listen(self.subscribe_callback)
 
-	def run(self, io_loop):
-		# global self.subscribe_handler
+	def run(self, io_loop, r_host='127.0.0.1', r_port=6379, r_db=1):
 		self.subscribe_handler = tornadoredis.Client(
-				host='127.0.0.1',
-				port=6379,
-				selected_db=1,
+				host=r_host,
+				port=r_port,
+				selected_db=r_db,
 				io_loop=io_loop
 			)
 		self.subscribe_handler.connect()
@@ -33,7 +31,6 @@ class PubSub(object):
 
 
 	def subscribe_callback(self, msg):
-		# global subscribe_callback, self.callback_for_channel
 		if msg.kind != 'message':
 			print 'msg is no kind of message, is ', msg
 			return 
@@ -42,8 +39,7 @@ class PubSub(object):
 		except:
 			print 'Error >>', traceback.format_exc()
 
-	def thesub(self, channel):
-		# global subscribe_callback, self.callback_for_channel
+	def sub(self, channel):
 		def _wrapper(func):
 			if channel in self.subscribe_channel_set:
 				print 'Already subscribe channel: {}'.format(channel)
