@@ -1,6 +1,10 @@
+import traceback
+import logging
 import redis
 import ujson
 import copy
+
+logger = logging.getLogger('simple')
 
 ROOM_PREFIX = 'rs:room'
 ROOM_INDEX = 'rs:room:index'            # auto increment if have new room create!
@@ -58,7 +62,7 @@ class RS(object):
     def user_join(self, uid):
         rs_id = self.c.hget(UID_TO_ROOM, uid)
         if rs_id:
-            print '[ A ] User has join the room. roomid={} | uid={}'.format(rs_id, uid)
+            logger.warning('[ A ] User has join the room. roomid=%s | uid=%s', rs_id, uid)
             self.update_ttl(uid)
             return rs_id
 
@@ -67,12 +71,12 @@ class RS(object):
         lst = self.c.zrevrangebyscore(ROOM_PREFIX, room_size, '(0')
         if lst:
             rs_id = lst[0]
-            print '[ B ] Find a available room. roomid={} | uid={}'.format(rs_id, uid)
+            logger.info('[ B ] Find a available room. roomid=%s | uid=%s', rs_id, uid)
         else:
             self.c.incr(ROOM_INDEX)
             rs_id = 'r{}'.format(self.c.get(ROOM_INDEX))
             self.c.sadd(ROOM_MEMBER_SET, rs_id)
-            print '[ C ] Create a new room. roomid={} | uid={}'.format(rs_id, uid)
+            logger.info('[ C ] Create a new room. roomid=%s | uid=%s', rs_id, uid)
          
 
         self._init(rs_id, uid)
@@ -119,9 +123,9 @@ class RS(object):
         rs_id = self.c.hget(UID_TO_ROOM, uid)
         if rs_id:
             self._clear(rs_id, uid)
-            print '[ A ] Remove a user. roomid={} | uid={}'.format(rs_id, uid)
+            logger.info('[ A ] Remove a user. roomid=%s | uid=%s', rs_id, uid)
             return 1
-        print '[ B ] Can\'t found tark user. roomid={} | uid={}'.format(rs_id, uid)
+        logger.info('[ B ] Can\'t found tark user. roomid=%s | uid=%s', rs_id, uid)
         return 0
 
 
@@ -144,9 +148,9 @@ class RS(object):
         all_uid = self.c.hgetall(UID_TO_ROOM)
         for uid, rs_id in all_uid.items():
             if self.is_alive(uid):
-                print '[ A ] User has keep alive. roomid={} | uid={}'.format(rs_id, uid)
+                logger.info('[ A ] User has keep alive. roomid=%s | uid=%s', rs_id, uid)
             else:
-                print '[ B ] User has die. roomid={} | uid={}'.format(rs_id, uid)
+                logger.info('[ B ] User has die. roomid=%s | uid=%s', rs_id, uid)
                 self._clear(rs_id, uid)
                 self.pub_to_room(rs_id, {'type':'leave','uid':uid})
 
@@ -159,8 +163,8 @@ class RS(object):
         empty_room = self.c.zrangebyscore(ROOM_PREFIX, 0, '(1')
         for rs_id in empty_room:
             self.c.srem(ROOM_MEMBER_SET, rs_id)
-            print '[ A ] Flash the room. roomid={}'.format(rs_id)
-        print '[ B ] Flash the room total. total empty room={}'.format(len(empty_room))
+            logger.info('[ A ] Flash the room. roomid=%s', rs_id)
+        print ('[ B ] Flash the room total. total empty room=%s', len(empty_room))
         self.c.zremrangebyscore(ROOM_PREFIX, 0, '(1')
 
 

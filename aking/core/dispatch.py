@@ -9,7 +9,8 @@ rs = RS(client=client)
 
 logger = logging.getLogger('simple')
 
-
+rs.clear() # clean the die-user
+rs.flush() # clean the empty-room
 
 class BaseMsgManager(object):
 
