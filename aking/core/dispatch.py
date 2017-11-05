@@ -2,6 +2,7 @@ import logging
 import redis
 import ujson
 from core import RS
+from tornado import ioloop
 
 client = redis.Redis(host="localhost", port=6379, db=0)
 rs = RS(client=client)
@@ -11,6 +12,10 @@ logger = logging.getLogger('simple')
 
 rs.clear() # clean the die-user
 rs.flush() # clean the empty-room
+
+ioloop.PeriodicCallback(rs.clear, 10 * 1000).start()
+ioloop.PeriodicCallback(rs.flush, 20 * 1000).start()
+
 
 class BaseMsgManager(object):
 

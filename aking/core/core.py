@@ -1,3 +1,4 @@
+import time
 import traceback
 import logging
 import redis
@@ -153,6 +154,7 @@ class RS(object):
                 logger.info('[ B ] User has die. roomid=%s | uid=%s', rs_id, uid)
                 self._clear(rs_id, uid)
                 self.pub_to_room(rs_id, {'type':'leave','uid':uid})
+        logger.info("Clear function call at %s, clear successful!", time.time())
 
     
 
@@ -164,8 +166,9 @@ class RS(object):
         for rs_id in empty_room:
             self.c.srem(ROOM_MEMBER_SET, rs_id)
             logger.info('[ A ] Flash the room. roomid=%s', rs_id)
-        print ('[ B ] Flash the room total. total empty room=%s', len(empty_room))
+        logger.info('[ B ] Flash the room total. total empty room=%s', len(empty_room))
         self.c.zremrangebyscore(ROOM_PREFIX, 0, '(1')
+        logger.info("Flush function call at %s, clear successful!", time.time())
 
 
     def pub_to_room(self, rs_id, data=''):
