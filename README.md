@@ -37,4 +37,11 @@ And if join successful
 
 And your member will get something like:
 
-
+    {
+        "msg_id": "226",
+        "data": {
+            "phone": "137xxxx",
+            "uid": 1003922
+        },
+        "msg_type": "user_join"
+   }
