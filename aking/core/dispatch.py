@@ -28,7 +28,7 @@ class BaseMsgManager(object):
 		packet = {
 			"receivers": rs.my_member(uid),
 			"content": ret
-		}
+            }
 		rs.pub_to_all(ujson.dumps(packet))
 		return ret 
 
