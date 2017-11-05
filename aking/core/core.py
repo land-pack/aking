@@ -219,6 +219,9 @@ class RS(object):
     def my_member(self, uid):
         rs_id = self.c.hget(UID_TO_ROOM, uid)
         members = self.c.smembers(ROOM_MEMBERS.format(rs_id))
+        logger.info("my member all include me -->%s | %s", type(members), members) 
+        members.remove(str(uid)) # delete self uid
+        logger.info("my member without  me -->%s | %s", type(members), members) 
         return members
 
             

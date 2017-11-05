@@ -18,36 +18,52 @@ class BaseMsgManager(object):
 	def user_join(self, handler, data):
 		logger.debug('data type=%s | data=%s', type(data), data)
 		uid = data.get("uid")
+		rs.user_join(uid)
+		packet = {
+			"receivers": rs.my_member(uid),
+			"content": {
+                    "msg_type":"user_join",
+                    "msg_id":"226",
+                    "data":{
+                        "uid": uid,
+                        "phone":"137xxxx"
+                    }
+                }
+            }
+		rs.pub_to_all(ujson.dumps(packet))
+
 		ret = {
 			"msg_type": "ack_user_join",
 			"msg_id": "124",
 			"data":{
-
 				}
 			}
-		rs.user_join(uid)
-		packet = {
-			"receivers": rs.my_member(uid),
-			"content": ret
-            }
-		rs.pub_to_all(ujson.dumps(packet))
 		return ret 
 
 
 	def user_leave(self, handler, data):
 		logger.debug('data type=%s | data=%s', type(data), data)
+
+		packet = {
+			"receivers": rs.my_member(uid),
+			"content": {
+                    "msg_type":"user_leave",
+                    "msg_id":"228",
+                    "data":{
+                        "uid": uid,
+                        "phone":"137xxxx"
+                    }
+                }
+            }
+		rs.pub_to_all(ujson.dumps(packet))
+        # TODO there are no used to response user leave
+        # cause connect already shutdown ...
 		ret = {
 			"msg_type": "ack_user_leave",
 			"msg_id": "125",
 			"data":{
 				}
 			}
-		packet = {
-			"receivers": rs.my_member(uid),
-			"content": ret
-		}
-
-		rs.pub_to_all(ujson.dumps(packet))
 		return ret 
 
 

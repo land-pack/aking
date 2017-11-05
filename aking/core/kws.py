@@ -55,7 +55,7 @@ def message_to_player_on_the_same_room(channel, body):
     for uid in uids:
         try:
             handler = uid_to_handler.get(str(uid))
-            handler.write_message(body)
+            handler.write_message(content)
             logger.info("Send Message to uid=%s | data=%s", uid, content)
         except:
             logger.error(traceback.format_exc())
