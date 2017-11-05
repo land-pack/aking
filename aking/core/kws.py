@@ -88,6 +88,7 @@ class EchoWebSocket(websocket.WebSocketHandler):
         uid = self.arg.get("uid", 0)
         del uid_to_handler[uid]
         logger.info("WebSocket closed")
+        dispatch_obj.call(self, "user_leave",data={"uid":uid})
 
 
 

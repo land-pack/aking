@@ -43,7 +43,7 @@ class BaseMsgManager(object):
 
 	def user_leave(self, handler, data):
 		logger.debug('data type=%s | data=%s', type(data), data)
-
+		uid = data.get("uid")
 		packet = {
 			"receivers": rs.my_member(uid),
 			"content": {
@@ -56,15 +56,6 @@ class BaseMsgManager(object):
                 }
             }
 		rs.pub_to_all(ujson.dumps(packet))
-        # TODO there are no used to response user leave
-        # cause connect already shutdown ...
-		ret = {
-			"msg_type": "ack_user_leave",
-			"msg_id": "125",
-			"data":{
-				}
-			}
-		return ret 
 
 
 class Dispatch(object):
@@ -93,7 +84,9 @@ class Dispatch(object):
 			handler.write_message(ujson.dumps(ret))
 		except:
 			logger.error('return message error format ')
-
+	def call(self, handler, func_name, data):
+	# Don't care about return value
+		getattr(self.msg_manager, func_name, self.default_func)(handler, data)
 
 	def default_func(self, handler, data):
 		print 'run default function'
