@@ -3,6 +3,7 @@ import redis
 import ujson
 from core import RS
 from tornado import ioloop
+from fake_data import init_data
 
 client = redis.Redis(host="localhost", port=6379, db=0)
 rs = RS(client=client)
@@ -43,6 +44,7 @@ class BaseMsgManager(object):
 			"data":{
 				}
 			}
+		ret = init_data		
 		return ret 
 
 
