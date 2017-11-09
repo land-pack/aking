@@ -14,7 +14,7 @@ logger = logging.getLogger('simple')
 rs.clear() # clean the die-user
 rs.flush() # clean the empty-room
 
-ioloop.PeriodicCallback(rs.clear, 10 * 1000).start()
+ioloop.PeriodicCallback(rs.clear, 4 * 1000).start()
 ioloop.PeriodicCallback(rs.flush, 20 * 1000).start()
 
 

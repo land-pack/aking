@@ -60,6 +60,23 @@ def message_to_player_on_the_same_room(channel, body):
         except:
             logger.error(traceback.format_exc())
 
+@pb.sub("rs:UserTTLHasExpire")
+def user_ttl_has_expire(channel, body):
+    data = ujson.loads(body)
+    uid = data.get("uid")
+    logger.debug("publish to player who has expire ttl ~%s", uid)
+
+    try:
+        print '...........1111'
+        handler = uid_to_handler.get(str(uid))
+        handler.close()
+        print '...........2222'
+    except:
+        logger.error(traceback.format_exc())
+    else:
+        logger.info("Close handler uid=%s | reason : ttl has expire~", uid)
+
+
 
 class EchoWebSocket(websocket.WebSocketHandler):
     def prepare(self):
@@ -85,8 +102,10 @@ class EchoWebSocket(websocket.WebSocketHandler):
 
 
     def on_close(self):
+        print '...........3333'
         uid = self.arg.get("uid", 0)
         del uid_to_handler[uid]
+        print '...........4444'
         logger.info("WebSocket closed")
         dispatch_obj.call(self, "user_leave",data={"uid":uid})
 

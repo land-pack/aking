@@ -16,7 +16,7 @@ UID_TO_INFO = 'rs:uid:to:info:{}'       # for ttl
 
 ROOM_INSIDE_PUB = 'rs:pub:room:{}'       # publish data to the target room
 ROOM_ALL_PUB = 'rs:MessageToPlayerOnTheSameRoom'  # publish data to all room
-
+CLOSE_USER_HANLDER = 'rs:UserTTLHasExpire' # TO POINT 
 # All your configuration should put as below sample
 # you can easy modify on redis client side
 CONF_MAIN = 'rs:conf:main:'
@@ -103,6 +103,7 @@ class RS(object):
         self.c.zincrby(ROOM_PREFIX, rs_id, -1)
         self.c.delete(UID_TO_INFO.format(uid))
 
+
     def rindex(self):
         """
             Room Index Counter
@@ -115,6 +116,12 @@ class RS(object):
 
     def is_alive(self, uid):
         if self.ttl(uid) > 0:
+            return True
+        else:
+            return False
+
+    def is_almost_die(self, uid):
+        if 0 < self.ttl(uid) < 5:
             return True
         else:
             return False
@@ -146,14 +153,22 @@ class RS(object):
         remove from data base and then publish a message to the
         room which the user are used to live!
         """
+
+
         all_uid = self.c.hgetall(UID_TO_ROOM)
         for uid, rs_id in all_uid.items():
+            if self.is_almost_die(uid):
+                self.pub_by_uid(uid)
+
+
             if self.is_alive(uid):
                 logger.info('[ A ] User has keep alive. roomid=%s | uid=%s', rs_id, uid)
             else:
                 logger.info('[ B ] User has die. roomid=%s | uid=%s', rs_id, uid)
                 self._clear(rs_id, uid)
                 self.pub_to_room(rs_id, {'type':'leave','uid':uid})
+
+
         logger.info("Clear function call at %s, clear successful!", time.time())
 
     
@@ -178,6 +193,8 @@ class RS(object):
     def pub_to_all(self, data=''):
         self.c.publish(ROOM_ALL_PUB, data)
 
+    def pub_by_uid(self, uid):
+        self.c.publish(CLOSE_USER_HANLDER, ujson.dumps({"uid": uid}))
 
     def sub_from_room(self, rs_id):
         data = self.c.pubsub_channels(ROOM_INSIDE_PUB.format(rs_id))
