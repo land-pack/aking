@@ -197,3 +197,12 @@ init_data = {
     "messagetype": "init",
     "messageid": "2000"
 }
+
+
+user_join_data =  { 
+                    "username": "游客_2867477",
+                    "photo": "https://imgsa.baidu.com/news/pic/item/0df431adcbef7609ece86edb25dda3cc7dd99e97.jpg",
+                    "total": '202422',
+                    "uid": "1003118"
+}
+
