@@ -3,7 +3,7 @@ import redis
 import ujson
 from core import RS
 from tornado import ioloop
-from fake_data import init_data, user_join_data
+from fake_data import init_data, user_join_data, user_leave_data
 
 client = redis.Redis(host="localhost", port=6379, db=0)
 rs = RS(client=client)
@@ -26,17 +26,13 @@ class BaseMsgManager(object):
 		uid = data.get("uid")
 		rs.user_join(uid)
 
-		user_join_data.update({
+		user_join_data['body'].update({
 			"uid":uid
 			})
 
 		packet = {
 			"receivers": rs.my_member(uid),
-			"content": {
-                    "msg_type":"user_join",
-                    "msg_id":"226",
-                    "data":user_join_data
-                }
+			"content": user_join_data
             }
 		rs.pub_to_all(ujson.dumps(packet))
 
@@ -53,17 +49,13 @@ class BaseMsgManager(object):
 	def user_leave(self, handler, data):
 		logger.debug('data type=%s | data=%s', type(data), data)
 		uid = data.get("uid")
-
+		user_leave_data['body'].update({
+			"uid":uid
+			})
 
 		packet = {
 			"receivers": rs.my_member(uid),
-			"content": {
-                    "msg_type":"user_leave",
-                    "msg_id":"228",
-                    "data":{
-                        "uid": uid
-                    }
-                }
+			"content": user_leave_data
             }
 		rs.pub_to_all(ujson.dumps(packet))
 

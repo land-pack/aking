@@ -199,10 +199,21 @@ init_data = {
 }
 
 
-user_join_data =  { 
-                    "username": "游客_2867477",
-                    "photo": "https://imgsa.baidu.com/news/pic/item/0df431adcbef7609ece86edb25dda3cc7dd99e97.jpg",
-                    "total": '202422',
-                    "uid": "1003118"
+user_join_data =  {
+    "body": {
+        "username": "游客_2867477",
+        "photo": "",
+        "total": 202422,
+        "uid": "1003118"
+    },
+    "messagetype": "user_in",
+    "messageid": "2012"
 }
 
+user_leave_data = {
+    "body": {
+        "uid": "1003182"
+    },
+    "messagetype": "user_out",
+    "messageid": "2013"
+}

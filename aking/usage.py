@@ -6,4 +6,4 @@ r = redis.Redis()
 rs = RS(r)
 
 
-rs.conf()
+rs.usage()
