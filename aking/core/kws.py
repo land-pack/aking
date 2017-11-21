@@ -9,8 +9,11 @@ from dispatch import BaseMsgManager, Dispatch
 
 logger = logging.getLogger('simple')
 
+class MyBaseMsgManager(BaseMsgManager):
+    pass 
+
 pb = PubSub()
-dispatch_obj = Dispatch(MsgManager=BaseMsgManager)
+dispatch_obj = Dispatch(MsgManager=MyBaseMsgManager)
 
 ws_handler = []
 player_lst = []
@@ -27,10 +30,15 @@ def my_sub(channel, body):
 
 @pb.sub("VGuessEventMessage")
 def vguess_event_message(channel, body):
-    print 'channel -->', channel, 'body', body
-    global ws_handler
-    for handler in ws_handler:
-        handler.write_message(body)
+    # print 'channel -->', channel, 'body', body
+    # global ws_handler
+    # for handler in ws_handler:
+    #     handler.write_message(body)
+    data = {
+           "content":  body
+    }
+    pb.pub("rs:MessageToPlayerOnTheAllRoom", ujson.dumps(data))
+    logger.info("hello, %s", data)
 
 @pb.sub("rs:MessageToPlayerOnTheAllRoom")
 def message_to_player_on_the_all_room(channel, body):
@@ -67,10 +75,9 @@ def user_ttl_has_expire(channel, body):
     logger.debug("publish to player who has expire ttl ~%s", uid)
 
     try:
-        print '...........1111'
+        logger.warning("A websocket handler has expire. uid=%s", uid)
         handler = uid_to_handler.get(str(uid))
         handler.close()
-        print '...........2222'
     except:
         logger.error(traceback.format_exc())
     else:
@@ -102,10 +109,9 @@ class EchoWebSocket(websocket.WebSocketHandler):
 
 
     def on_close(self):
-        print '...........3333'
         uid = self.arg.get("uid", 0)
+        logger.info("A websocket handler will close. uid=%s", uid)
         del uid_to_handler[uid]
-        print '...........4444'
         logger.info("WebSocket closed")
         dispatch_obj.call(self, "user_leave",data={"uid":uid})
 
